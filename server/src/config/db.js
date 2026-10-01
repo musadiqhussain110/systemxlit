@@ -1,108 +1,73 @@
-const fs = require('fs');
-const path = require('path');
-const { DatabaseSync } = require('node:sqlite');
+const mysql = require('mysql2/promise');
 const { env } = require('./env');
 const { schemaStatements, tablesInDependencyOrder } = require('./schema');
 
-let database = null;
-let adapter = null;
+let pool = null;
 
-function normalizeParameter(value) {
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === 'boolean') return value ? 1 : 0;
-  if (value === undefined) return null;
-  return value;
-}
+function connectionOptions() {
+  if (env.databaseUrl) {
+    const url = new URL(env.databaseUrl);
+    return {
+      host: url.hostname,
+      port: Number(url.port || 3306),
+      user: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+      database: decodeURIComponent(url.pathname.replace(/^\//, '') || 'default'),
+      ssl: { rejectUnauthorized: true },
+    };
+  }
 
-function isReadQuery(sql) {
-  return /^\s*(SELECT|WITH|PRAGMA|EXPLAIN)\b/i.test(sql);
-}
-
-function createAdapter(db) {
   return {
-    async execute(sql, params = []) {
-      const statement = db.prepare(sql);
-      const values = params.map(normalizeParameter);
-      if (isReadQuery(sql)) return [statement.all(...values), []];
-
-      const result = statement.run(...values);
-      return [{
-        affectedRows: Number(result.changes || 0),
-        insertId: result.lastInsertRowid == null ? 0 : Number(result.lastInsertRowid),
-      }, []];
-    },
-
-    async query(sql, params = []) {
-      return this.execute(sql, params);
-    },
+    host: env.dbHost,
+    port: env.dbPort,
+    user: env.dbUser,
+    password: env.dbPassword,
+    database: env.dbName,
+    ...(env.dbSsl ? { ssl: { rejectUnauthorized: true } } : {}),
   };
 }
 
-function resolveDatabasePath() {
-  if (env.databasePath === ':memory:') return ':memory:';
-  return path.isAbsolute(env.databasePath)
-    ? env.databasePath
-    : path.resolve(__dirname, '../..', env.databasePath);
-}
-
-function getDatabase() {
-  if (!database) throw new Error('Database has not been connected yet');
-  return database;
-}
-
 function getPool() {
-  if (!adapter) throw new Error('Database has not been connected yet');
-  return adapter;
+  if (!pool) throw new Error('Database has not been connected yet');
+  return pool;
 }
 
-function ensureColumn(table, column, definition) {
-  const db = getDatabase();
-  const columns = db.prepare(`PRAGMA table_info(\`${table}\`)`).all();
-  if (!columns.some((entry) => entry.name === column)) db.exec(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
-}
-
-function createSchema() {
-  const db = getDatabase();
-  for (const statement of schemaStatements) db.exec(statement);
-  ensureColumn('equipment', 'approvalRequired', 'INTEGER NOT NULL DEFAULT 0');
-  ensureColumn('booking_rules', 'departmentOnlyAccess', 'INTEGER NOT NULL DEFAULT 0');
+async function createSchema() {
+  for (const statement of schemaStatements) await getPool().query(statement);
 }
 
 async function connectDatabase() {
-  if (database) return adapter;
-
-  const databasePath = resolveDatabasePath();
-  if (databasePath !== ':memory:') fs.mkdirSync(path.dirname(databasePath), { recursive: true });
-
-  database = new DatabaseSync(databasePath);
-  database.exec('PRAGMA journal_mode = WAL');
-  database.exec('PRAGMA synchronous = NORMAL');
-  database.exec('PRAGMA busy_timeout = 5000');
-  createSchema();
-  adapter = createAdapter(database);
-
-  console.log(`SQLite connected: ${databasePath}`);
-  return adapter;
+  if (pool) return pool;
+  pool = mysql.createPool({
+    ...connectionOptions(),
+    waitForConnections: true,
+    connectionLimit: 4,
+    queueLimit: 0,
+    connectTimeout: 12_000,
+    decimalNumbers: true,
+    dateStrings: true,
+  });
+  await pool.query('SELECT 1');
+  await createSchema();
+  console.log('MySQL connected');
+  return pool;
 }
 
 async function resetDatabase() {
-  const db = getDatabase();
-  db.exec('BEGIN IMMEDIATE');
+  const db = getPool();
+  await db.query('SET FOREIGN_KEY_CHECKS = 0');
   try {
-    for (const table of tablesInDependencyOrder) db.exec(`DROP TABLE IF EXISTS \`${table}\``);
-    createSchema();
-    db.exec('COMMIT');
-  } catch (error) {
-    db.exec('ROLLBACK');
-    throw error;
+    for (const table of tablesInDependencyOrder) await db.query(`DROP TABLE IF EXISTS \`${table}\``);
+  } finally {
+    await db.query('SET FOREIGN_KEY_CHECKS = 1');
   }
+  await createSchema();
 }
 
 async function closeDatabase() {
-  if (!database) return;
-  database.close();
-  database = null;
-  adapter = null;
+  if (!pool) return;
+  await pool.end();
+  pool = null;
 }
 
-module.exports = { connectDatabase, getPool, getDatabase, resetDatabase, closeDatabase };
+module.exports = { connectDatabase, getPool, resetDatabase, closeDatabase };
