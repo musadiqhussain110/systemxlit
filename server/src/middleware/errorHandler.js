@@ -7,11 +7,11 @@ function notFound(req, _res, next) {
 function errorHandler(err, _req, res, _next) {
   const message = String(err?.message || '');
 
-  if (err?.code === 'ERR_SQLITE_ERROR' && (err?.errcode === 2067 || message.includes('UNIQUE constraint failed'))) {
+  if (err?.code === 'ER_DUP_ENTRY' || (err?.code === 'ERR_SQLITE_ERROR' && (err?.errcode === 2067 || message.includes('UNIQUE constraint failed')))) {
     err = new ApiError(409, 'A record with that unique value already exists');
-  } else if (err?.code === 'ERR_SQLITE_ERROR' && (err?.errcode === 1299 || message.includes('NOT NULL constraint failed'))) {
+  } else if (['ER_BAD_NULL_ERROR', 'ER_NO_DEFAULT_FOR_FIELD'].includes(err?.code) || (err?.code === 'ERR_SQLITE_ERROR' && (err?.errcode === 1299 || message.includes('NOT NULL constraint failed')))) {
     err = new ApiError(400, 'One or more required values are missing');
-  } else if (err?.code === 'ERR_SQLITE_ERROR' && message.includes('CHECK constraint failed')) {
+  } else if (['ER_CHECK_CONSTRAINT_VIOLATED', 'ER_TRUNCATED_WRONG_VALUE', 'ER_DATA_TOO_LONG'].includes(err?.code) || (err?.code === 'ERR_SQLITE_ERROR' && message.includes('CHECK constraint failed'))) {
     err = new ApiError(400, 'One or more values are invalid');
   }
 

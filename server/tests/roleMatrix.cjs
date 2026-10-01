@@ -1,4 +1,4 @@
-process.env.DATABASE_PATH = ':memory:';
+require('./requireTestDatabase.cjs');
 const assert = require('node:assert/strict');
 const jwt = require('jsonwebtoken');
 const { connectDatabase, closeDatabase } = require('../src/config/db');

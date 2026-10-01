@@ -136,7 +136,7 @@ Then serve `client/dist` from your web server/CDN and point `VITE_API_URL` to th
 
 ## Verification
 
-Run `node server/tests/workflow.cjs` for isolated in-memory booking lifecycle and conflict regression checks. Your saved database is never changed by these tests.
+Run `npm test` (or `node server/tests/runIsolated.cjs workflow.cjs roleMatrix.cjs system.cjs`) for booking lifecycle, role, API, and browser checks. The runner creates a disposable MySQL database and removes it after checking; the configured application database is not used. The database account needs permission to create/drop a test database. Browser checks use Playwright and Microsoft Edge.
 
 The public home page is `/`; signed-in users are directed to `/dashboard`. Resource cards prefill `/book`. The original `client/src/assets/hackathon.png` is displayed through a CSS viewport that removes only its transparent padding.
 
@@ -149,4 +149,4 @@ Permissions follow the supplied role table without administrator inheritance of 
 - Department coordinator: review department requests, manage department labs, define department rules, assign priorities, monitor department usage, and check/resolve booking conflicts.
 - Administrator: manage users, departments, labs, categories, system-wide analytics, role assignments, and booking activity monitoring. Booking monitoring is read-only.
 
-`shared/rolePermissions.json` defines the fixed policy used by the frontend and backend. `ROLE_ACCESS_MATRIX.md` maps the duties and restrictions. Run `node server/tests/workflow.cjs` and `node server/tests/roleMatrix.cjs` to verify lifecycle, permission, and department boundaries in memory.
+`shared/rolePermissions.json` defines the fixed policy used by the frontend and backend. `ROLE_ACCESS_MATRIX.md` maps the duties and restrictions. Run `node server/tests/runIsolated.cjs workflow.cjs roleMatrix.cjs` to verify lifecycle, permission, and department boundaries in isolated MySQL databases. Direct execution of these suites is blocked to protect application data.

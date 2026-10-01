@@ -3,4 +3,8 @@ node_modules/
 *.log
 client/dist/
 server/uploads/
+output/qa/vite-test-cache/
+output/qa/workflow-build-*/
+output/qa/vite-test-cache/
+output/qa/workflow-build-*/
 .DS_Store
