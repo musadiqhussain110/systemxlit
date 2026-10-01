@@ -1,0 +1,122 @@
+{
+  "roles": [
+    "student",
+    "faculty",
+    "labStaff",
+    "coordinator",
+    "admin"
+  ],
+  "capabilities": {
+    "labs.read": [
+      "student",
+      "faculty",
+      "labStaff",
+      "coordinator",
+      "admin"
+    ],
+    "equipment.read": [
+      "student",
+      "faculty",
+      "labStaff"
+    ],
+    "bookings.create": [
+      "student",
+      "faculty"
+    ],
+    "bookings.cancelOwn": [
+      "student",
+      "faculty"
+    ],
+    "bookings.review": [
+      "labStaff",
+      "coordinator"
+    ],
+    "bookings.priority": [
+      "coordinator"
+    ],
+    "bookings.conflicts": [
+      "coordinator"
+    ],
+    "issues.manage": [
+      "labStaff"
+    ],
+    "labs.manage": [
+      "coordinator",
+      "admin"
+    ],
+    "labs.availability": [
+      "labStaff"
+    ],
+    "equipment.manage": [
+      "labStaff"
+    ],
+    "departments.manage": [
+      "admin"
+    ],
+    "categories.manage": [
+      "admin"
+    ],
+    "rules.manage": [
+      "coordinator"
+    ],
+    "analytics.read": [
+      "coordinator",
+      "admin"
+    ],
+    "users.manage": [
+      "admin"
+    ],
+    "activity.read": [
+      "admin"
+    ]
+  },
+  "duties": {
+    "student": [
+      "Browse available labs and equipment",
+      "Search by category",
+      "View available dates and time slots",
+      "Submit booking requests",
+      "Add booking purpose",
+      "Track approval status",
+      "Cancel own bookings",
+      "View own booking history"
+    ],
+    "faculty": [
+      "Browse available labs and equipment",
+      "Search by category",
+      "View available dates and time slots",
+      "Submit booking requests",
+      "Add booking purpose",
+      "Track approval status",
+      "Cancel own bookings",
+      "View own booking history"
+    ],
+    "labStaff": [
+      "Manage lab availability",
+      "Manage equipment",
+      "Approve or reject requests",
+      "Issue equipment",
+      "Confirm returns",
+      "Record damage or missing items",
+      "Block resources temporarily",
+      "Update maintenance status"
+    ],
+    "coordinator": [
+      "Review important requests",
+      "Manage department labs",
+      "Define booking rules",
+      "Set priority levels",
+      "Monitor resource usage",
+      "Handle booking conflicts"
+    ],
+    "admin": [
+      "Manage users",
+      "Manage departments",
+      "Manage labs",
+      "Manage equipment categories",
+      "View system-wide analytics",
+      "Control permissions",
+      "Monitor booking activity"
+    ]
+  }
+}
