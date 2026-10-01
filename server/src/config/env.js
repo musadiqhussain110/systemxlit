@@ -12,6 +12,7 @@ const env = {
   dbPassword: process.env.DB_PASSWORD || '',
   dbName: process.env.DB_NAME || 'university_lab_booking',
   dbSsl: process.env.DB_SSL === 'true',
+  dbSslRejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
   jwtSecret: process.env.JWT_SECRET || 'development-only-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',

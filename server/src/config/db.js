@@ -13,7 +13,7 @@ function connectionOptions() {
       user: decodeURIComponent(url.username),
       password: decodeURIComponent(url.password),
       database: decodeURIComponent(url.pathname.replace(/^\//, '') || 'default'),
-      ssl: { rejectUnauthorized: true },
+      ssl: { rejectUnauthorized: env.dbSslRejectUnauthorized },
     };
   }
 
@@ -23,7 +23,7 @@ function connectionOptions() {
     user: env.dbUser,
     password: env.dbPassword,
     database: env.dbName,
-    ...(env.dbSsl ? { ssl: { rejectUnauthorized: true } } : {}),
+    ...(env.dbSsl ? { ssl: { rejectUnauthorized: env.dbSslRejectUnauthorized } } : {}),
   };
 }
 
